@@ -1,0 +1,111 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath ANDROID_GRADLE_TOOLS
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = gradleVersion
+}
+
+
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+group = 'fr.baloomba'
+version = '1.0.0'
+
+dependencies {
+    // GRADLE DEPENDENCIES
+    compile GOOGLE_PLAY_SERVICES
+    compile GOOGLE_ANDROID_SUPPORT_V4
+
+    // PROJECT DEPENDENCIES
+    compile BALOOMBA_WSVOLLEY
+}
+
+android {
+    compileSdkVersion Integer.parseInt(ANDROID_BUILD_SDK_VERSION)
+    buildToolsVersion = ANDROID_BUILD_TOOLS_VERSION
+
+    defaultConfig {
+        minSdkVersion Integer.parseInt(ANDROID_BUILD_MIN_SDK_VERSION)
+        targetSdkVersion Integer.parseInt(ANDROID_BUILD_TARGET_SDK_VERSION)
+
+        versionCode 1
+        versionName project.version
+
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_7
+        targetCompatibility = JavaVersion.VERSION_1_7
+    }
+
+}
+
+signing {
+    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: sonatypeRepo) {
+            authentication(userName: sonatypeUsername,
+                    password: sonatypePassword)
+        }
+
+        pom.artifactId = 'geocoding'
+
+        pom.project {
+            artifactId 'geocoding'
+            packaging 'aar'
+            description 'Google Geocoding Android integration'
+            url 'https://github.com/baloomba/google_geocoding_android'
+
+            scm {
+                url 'scm:git@github.com:baloomba/google_geocoding_android.git'
+                connection 'scm:git@github.com:baloomba/google_geocoding_android.git'
+                developerConnection 'scm:git@github.com:baloomba/google_geocoding_android.git'
+            }
+
+            licenses {
+                license {
+                    name 'The MIT License (MIT)'
+                    url 'http://www.opensource.org/licenses/mit-license.php'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'baloo'
+                    name 'Clement BOULY'
+                    email 'bouly.clement@gmail.com'
+                }
+            }
+        }
+    }
+}
